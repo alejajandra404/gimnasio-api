@@ -86,3 +86,21 @@ Porque `miembros.service.ts` no tiene ningún decorador de rutas (`@Get`, `@Post
 
 **4. ¿Por qué el Service se inyecta sin token en el Controller, y el repositorio sí necesita uno?**
 Porque `MiembrosService` es una clase de verdad, existe en tiempo de ejecución y Nest la puede reconocer sola. En cambio `MiembroRepository` es una interfaz, y las interfaces desaparecen cuando se compila el código a JavaScript. Por eso el repositorio necesita un token (`MIEMBRO_REPOSITORY`) que sirva como identificador para que Nest sepa qué clase concreta darle, mientras que el servicio no necesita nada de eso porque ya es identificable por sí mismo.
+
+## Tarea – Construir el módulo Horarios
+
+Rutas nuevas de horarios:
+
+- `GET /horarios` — lista todos los horarios
+- `GET /horarios/:id` — busca un horario por id
+- `POST /horarios` — crea un horario (`{ "claseId": number, "dia": string, "horaInicio": string, "cupoMaximo": number, "entrenador": string }`)
+- `PATCH /horarios/:id` — actualiza un horario (todos los campos opcionales)
+- `DELETE /horarios/:id` — elimina un horario
+
+### Preguntas de la tarea
+
+**1. ¿Por qué el Service se inyecta sin token en el Controller, y el repositorio sí necesita uno?**
+Es el mismo caso que con Miembros: `HorariosService` es una clase real, existe cuando el programa ya está corriendo, así que Nest la reconoce sola sin necesitar ningún identificador extra. En cambio `HorarioRepository` es una interfaz, y las interfaces se borran al compilar a JavaScript, no queda nada de ellas en tiempo de ejecución. Por eso el repositorio sí necesita un token (`HORARIO_REPOSITORY`) que le sirva de nombre a Nest para saber qué clase concreta conectar ahí.
+
+**2. Si mandas un `claseId` que no es número, ¿qué código de estado esperarías, y por qué este Controller no lo detecta?**
+El servidor respondió 201 y guardó el horario tal cual, con `claseId` como string. Esto pasa porque `HorariosController` no tiene ninguna validación escrita a mano (a diferencia de `InscripcionesController`, donde sí se revisa con `Number.isInteger(...)` antes de guardar).

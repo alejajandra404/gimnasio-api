@@ -62,3 +62,27 @@ El 400 es cuando la petición viene mal armada, por ejemplo si falta `horarioId`
 
 **6. ¿Por qué cambió el código de estado de esa última petición?**
 Porque al cancelar una inscripción, su estado cambia a "cancelada", y la regla del cupo solo cuenta las que dicen "confirmada". Entonces, al cancelar una, se libera un lugar en el horario, y por eso la siguiente petición que antes daba 409 (por cupo lleno) ahora sí puede pasar y da 201.
+
+## Práctica 7 – Construir el módulo Miembros
+
+Rutas nuevas de miembros:
+
+- `GET /miembros` — lista todos los miembros
+- `GET /miembros/:id` — busca un miembro por id
+- `POST /miembros` — crea un miembro (`{ "nombre": string, "correo": string, "membresia": string }`)
+- `PATCH /miembros/:id` — actualiza un miembro (todos los campos opcionales)
+- `DELETE /miembros/:id` — elimina un miembro
+
+### Preguntas de la práctica
+
+**1. ¿Por qué esta interfaz no menciona Express, NestJS ni memoria?**
+Porque `MiembroRepository` solo dice qué se puede hacer (listar, buscar, crear, actualizar, eliminar), no cómo se hace ni dónde se guardan los datos. Es nada más un contrato. Nada de eso tiene que ver con si los datos vienen de un arreglo en memoria, de una base de datos, o de cualquier otra cosa.
+
+**2. ¿Qué palabra de esa clase es la que promete cumplir la interfaz del paso anterior?**
+La palabra `implements`. Cuando escribo `class MiembroMemoriaRepository implements MiembroRepository`, le estoy diciendo a TypeScript "esta clase se compromete a tener todos los métodos que pide esa interfaz, con los mismos tipos". 
+
+**3. ¿Por qué este archivo no sabe qué es una petición HTTP?**
+Porque `miembros.service.ts` no tiene ningún decorador de rutas (`@Get`, `@Post`, etc.) ni nada de Express o NestJS relacionado con HTTP. Solo recibe datos ya limpios (como un DTO) y llama al repositorio. Todo lo que tiene que ver con la petición en sí es trabajo del controlador, no del servicio. 
+
+**4. ¿Por qué el Service se inyecta sin token en el Controller, y el repositorio sí necesita uno?**
+Porque `MiembrosService` es una clase de verdad, existe en tiempo de ejecución y Nest la puede reconocer sola. En cambio `MiembroRepository` es una interfaz, y las interfaces desaparecen cuando se compila el código a JavaScript. Por eso el repositorio necesita un token (`MIEMBRO_REPOSITORY`) que sirva como identificador para que Nest sepa qué clase concreta darle, mientras que el servicio no necesita nada de eso porque ya es identificable por sí mismo.

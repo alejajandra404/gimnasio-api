@@ -31,6 +31,4 @@ export interface Inscripcion {
   creadaEn: Date;
 }
 
-// Lo que hace falta para crear una: nada de id, estado ni creadaEn.
-// Eso lo decide el dominio, no quien manda la peticion.
 export type NuevaInscripcion = Omit<Inscripcion, 'id' | 'estado' | 'creadaEn'>;

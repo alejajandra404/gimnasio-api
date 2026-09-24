@@ -1,10 +1,7 @@
-import { Horario, Inscripcion, Miembro, NuevaInscripcion } from './entidades.js';
+import { Horario, Inscripcion, Miembro, NuevaInscripcion } from './entidades';
 
-// La interfaz que el Service conoce. No sabe si detras hay un Map en
-// memoria o MySQL: ese es el punto de la Sesion 7.
-//
-// Todos los metodos devuelven Promise aunque hoy el Map no lo necesite:
-// el contrato se disena para el caso mas lento.
+// La interfaz que el Service conoce. No sabe si detras hay un arreglo
+// en memoria o MySQL: ese es el punto de la Practica 8 (Prisma).
 export interface InscripcionRepository {
   listar(): Promise<Inscripcion[]>;
   buscarPorId(id: number): Promise<Inscripcion | null>;

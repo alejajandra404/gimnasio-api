@@ -1,7 +1,5 @@
-import { Horario, Miembro } from '../inscripciones/dominio/entidades.js';
+import { Horario, Miembro } from '../inscripciones/dominio/entidades';
 
-// Los cupos son chicos a proposito: asi el 409 de cupo lleno se
-// alcanza en tres peticiones y se puede probar en clase.
 export const HORARIOS: Horario[] = [
   { id: 1, claseId: 1, dia: 'lunes', horaInicio: '07:00', cupoMaximo: 2, entrenador: 'Ana Robles' },
   { id: 2, claseId: 1, dia: 'miercoles', horaInicio: '07:00', cupoMaximo: 3, entrenador: 'Ana Robles' },

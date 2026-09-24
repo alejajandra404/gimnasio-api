@@ -1,12 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import { Miembro } from '../dominio/entidades.js';
-import { MiembroRepository } from '../dominio/miembro.repository.js';
-import { CrearMiembroDto } from '../dto/crear-miembro.dto.js';
-import { ActualizarMiembroDto } from '../dto/actualizar-miembro.dto.js';
+import { Miembro } from '../dominio/entidades';
+import { MiembroRepository } from '../dominio/miembro.repository';
+import { CrearMiembroDto } from '../dto/crear-miembro.dto';
+import { ActualizarMiembroDto } from '../dto/actualizar-miembro.dto';
 
-// La palabra clave es "implements": esta clase promete cumplir la
-// interfaz de arriba. En la Sesion 7, MiembroPrismaRepository
-// implementa la misma interfaz contra MySQL, y nadie mas se entera.
+// En la Practica 8, MiembroPrismaRepository implementa la misma
+// interfaz contra MySQL.
 @Injectable()
 export class MiembroMemoriaRepository implements MiembroRepository {
   private miembros: Miembro[] = [
@@ -39,7 +38,10 @@ export class MiembroMemoriaRepository implements MiembroRepository {
   async actualizar(id: number, datos: ActualizarMiembroDto): Promise<Miembro | null> {
     const miembro = this.miembros.find((m) => m.id === id);
     if (!miembro) return null;
-    Object.assign(miembro, datos);
+    if (datos.nombre !== undefined) miembro.nombre = datos.nombre;
+    if (datos.correo !== undefined) miembro.correo = datos.correo;
+    if (datos.membresia !== undefined) miembro.membresia = datos.membresia;
+    if (datos.activo !== undefined) miembro.activo = datos.activo;
     return miembro;
   }
 

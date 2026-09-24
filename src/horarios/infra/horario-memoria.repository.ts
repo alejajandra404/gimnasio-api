@@ -1,12 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import { Horario } from '../dominio/entidades.js';
-import { HorarioRepository } from '../dominio/horario.repository.js';
-import { CrearHorarioDto } from '../dto/crear-horario.dto.js';
-import { ActualizarHorarioDto } from '../dto/actualizar-horario.dto.js';
+import { Horario } from '../dominio/entidades';
+import { HorarioRepository } from '../dominio/horario.repository';
+import { CrearHorarioDto } from '../dto/crear-horario.dto';
+import { ActualizarHorarioDto } from '../dto/actualizar-horario.dto';
 
-// La palabra clave es "implements": esta clase promete cumplir la
-// interfaz de arriba. En la Sesion 7, HorarioPrismaRepository
-// implementa la misma interfaz contra MySQL, y nadie mas se entera.
+// En la Practica 8, HorarioPrismaRepository implementa la misma
+// interfaz contra MySQL.
 @Injectable()
 export class HorarioMemoriaRepository implements HorarioRepository {
   private horarios: Horario[] = [
@@ -40,7 +39,11 @@ export class HorarioMemoriaRepository implements HorarioRepository {
   async actualizar(id: number, datos: ActualizarHorarioDto): Promise<Horario | null> {
     const horario = this.horarios.find((h) => h.id === id);
     if (!horario) return null;
-    Object.assign(horario, datos);
+    if (datos.claseId !== undefined) horario.claseId = datos.claseId;
+    if (datos.dia !== undefined) horario.dia = datos.dia;
+    if (datos.horaInicio !== undefined) horario.horaInicio = datos.horaInicio;
+    if (datos.cupoMaximo !== undefined) horario.cupoMaximo = datos.cupoMaximo;
+    if (datos.entrenador !== undefined) horario.entrenador = datos.entrenador;
     return horario;
   }
 

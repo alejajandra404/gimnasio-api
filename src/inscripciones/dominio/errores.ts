@@ -1,6 +1,3 @@
-// Ningun error de aqui menciona un codigo HTTP. Eso lo decide el
-// Controller: el dominio solo reporta que paso.
-
 export class HorarioNoEncontradoError extends Error {
   constructor(horarioId: number) {
     super(`No existe el horario ${horarioId}`);

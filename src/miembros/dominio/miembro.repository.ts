@@ -1,9 +1,9 @@
-import { Miembro } from './entidades.js';
-import { CrearMiembroDto } from '../dto/crear-miembro.dto.js';
-import { ActualizarMiembroDto } from '../dto/actualizar-miembro.dto.js';
+import { Miembro } from './entidades';
+import { CrearMiembroDto } from '../dto/crear-miembro.dto';
+import { ActualizarMiembroDto } from '../dto/actualizar-miembro.dto';
 
 // La interfaz que el Service conoce. No sabe si detras hay un arreglo
-// en memoria o MySQL: ese es el punto de la Sesion 7.
+// en memoria o MySQL: ese es el punto de la Practica 8 (Prisma).
 export interface MiembroRepository {
   listar(): Promise<Miembro[]>;
   buscarPorId(id: number): Promise<Miembro | null>;

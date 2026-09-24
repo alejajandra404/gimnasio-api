@@ -1,7 +1,5 @@
 // Validacion minima a mano. En la Sesion 9 (Blindar la API) la hace
 // ValidationPipe.
-export interface CrearMiembroDto {
+export interface CrearClaseDto {
   nombre: string;
-  correo: string;
-  membresia: string;
 }

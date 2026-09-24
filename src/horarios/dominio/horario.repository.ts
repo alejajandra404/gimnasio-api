@@ -1,9 +1,9 @@
-import { Horario } from './entidades.js';
-import { CrearHorarioDto } from '../dto/crear-horario.dto.js';
-import { ActualizarHorarioDto } from '../dto/actualizar-horario.dto.js';
+import { Horario } from './entidades';
+import { CrearHorarioDto } from '../dto/crear-horario.dto';
+import { ActualizarHorarioDto } from '../dto/actualizar-horario.dto';
 
 // La interfaz que el Service conoce. No sabe si detras hay un arreglo
-// en memoria o MySQL: ese es el punto de la Sesion 7.
+// en memoria o MySQL -- eso llega en la Practica 8 (Prisma).
 export interface HorarioRepository {
   listar(): Promise<Horario[]>;
   buscarPorId(id: number): Promise<Horario | null>;

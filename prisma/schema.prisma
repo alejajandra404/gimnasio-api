@@ -1,0 +1,67 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+model Clase {
+  id          Int       @id @default(autoincrement())
+  nombre      String
+  duracionMin Int
+  descripcion String?
+  horarios    Horario[]
+
+  @@map("clases")
+}
+
+model Horario {
+  id            Int           @id @default(autoincrement())
+  claseId       Int
+  dia           String
+  horaInicio    String
+  cupoMaximo    Int
+  entrenador    String
+
+  clase         Clase         @relation(fields: [claseId], references: [id])
+  inscripciones Inscripcion[]
+
+  @@map("horarios")
+}
+
+model Miembro {
+  id            Int           @id @default(autoincrement())
+  nombre        String
+  correo        String        @unique
+  membresia     String
+  activo        Boolean       @default(true)
+  inscripciones Inscripcion[]
+
+  @@map("miembros")
+}
+
+enum EstadoInscripcion {
+  confirmada
+  cancelada
+}
+
+model Inscripcion {
+  id        Int               @id @default(autoincrement())
+  horarioId Int
+  miembroId Int
+  estado    EstadoInscripcion @default(confirmada)
+  creadaEn  DateTime          @default(now())
+
+  horario Horario @relation(fields: [horarioId], references: [id])
+  miembro Miembro @relation(fields: [miembroId], references: [id])
+
+  @@unique([horarioId, miembroId])
+  @@map("inscripciones")
+}

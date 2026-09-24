@@ -1,11 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { HORARIOS, MIEMBROS } from '../../datos/gimnasio.seed.js';
-import { Inscripcion, NuevaInscripcion } from '../dominio/entidades.js';
-import { InscripcionRepository } from '../dominio/inscripcion.repository.js';
+import { HORARIOS, MIEMBROS } from '../../datos/gimnasio.seed';
+import { Inscripcion, NuevaInscripcion } from '../dominio/entidades';
+import { InscripcionRepository } from '../dominio/inscripcion.repository';
 
-// La palabra clave es "implements": esta clase promete cumplir la
-// interfaz de arriba. En la Sesion 7, InscripcionPrismaRepository
-// implementa la misma interfaz contra MySQL, y nadie mas se entera.
+// En la Practica 8, InscripcionPrismaRepository implementa la misma
+// interfaz contra MySQL.
 @Injectable()
 export class InscripcionMemoriaRepository implements InscripcionRepository {
   private inscripciones: Inscripcion[] = [];

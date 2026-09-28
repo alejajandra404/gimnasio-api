@@ -142,3 +142,36 @@ Porque en `Horario` hay una relación con `claseId`, que es la que de verdad gua
 
 **5. ¿De dónde sale la relación de muchos a muchos entre Miembro y Horario, si nunca se declaró?**
 Sale porque `Inscripcion` tiene una relación con `Horario` y otra con `Miembro` al mismo tiempo. Entonces un miembro puede tener varias inscripciones a distintos horarios, y un horario puede tener inscripciones de varios miembros distintos. Así, usando la tabla `Inscripcion` de en medio, se conecta un miembro con muchos horarios y un horario con muchos miembros.
+
+## Práctica 9 – Blindar la API
+
+Aquí ya no se usan los repositorios en memoria: los cuatro (`Clase`, `Horario`, `Miembro`, `Inscripcion`) ahora hablan directo con MySQL a través de Prisma. Además se le agregó validación de verdad a los datos que llegan, un filtro que traduce los errores del dominio a códigos HTTP, y CORS para controlar desde qué páginas se puede consumir la API.
+
+Lo que se hizo:
+
+- Se creó `PrismaService` (con el driver adapter de MariaDB) y `PrismaModule`, marcado como `@Global()` para no tener que importarlo en cada módulo
+- Se crearon los cuatro repositorios "Prisma" (`ClasePrismaRepository`, `HorarioPrismaRepository`, `MiembroPrismaRepository`, `InscripcionPrismaRepository`), cada uno implementando la misma interfaz que ya existía, y se borraron los cuatro repositorios en memoria
+- Los DTOs pasaron de ser interfaces a ser clases con decoradores de `class-validator` (`@IsString`, `@IsInt`, `@IsEmail`, `@IsIn`, etc.)
+- Se activó el `ValidationPipe` de forma global en `main.ts`
+- Se creó un filtro de excepciones (`ErrorDominioFilter`) que atrapa todos los errores del dominio desde una sola clase base y los traduce al código HTTP correcto
+- Se configuró CORS para que solo dos orígenes de desarrollo puedan consumir la API
+
+### Preguntas de la práctica
+
+**1. ¿Qué línea del Service o del Controller tuvo que cambiar para que Clases hablara con MySQL?**
+Ninguna. Ni `ClasesService` ni `ClasesController` se enteraron del cambio. Los dos solo conocen la interfaz `ClaseRepository`, no saben si atrás hay un arreglo en memoria o MySQL de verdad. Lo único que cambié fue una línea en `clases.module.ts`: donde decía `useClass: ClaseMemoriaRepository` ahora dice `useClass: ClasePrismaRepository`. Con eso Nest ya le inyecta al Service la versión que habla con la base de datos, y ni se entera.
+
+**2. ¿Por qué `InscripcionesService` no tuvo que cambiar ni una línea de las reglas de cupo y duplicados?**
+Porque esas reglas (no pasarse del cupo, no inscribirse dos veces al mismo horario) están escritas en el Service usando nada más los métodos de la interfaz (`buscarHorario`, `buscarMiembro`, `buscarPorHorario`, `guardar`). No les importa si esos datos vienen de un arreglo en memoria o de una consulta a MySQL, el Service solo cuenta y compara números. Cambié el repositorio por debajo y las reglas de negocio ni se movieron.
+
+**3. ¿Por qué una interfaz no puede validar nada en tiempo de ejecución?**
+Porque una interfaz de TypeScript es solo para que el editor te avise si algo está mal escrito, pero se borra por completo cuando el código se compila a JavaScript. O sea que cuando la API ya está corriendo y le llega una petición, no queda ni rastro de esa interfaz en ningún lado para revisar nada. En cambio una clase con decoradores de `class-validator` sí existe cuando el programa corre, así que Nest sí la puede usar para revisar el dato real que llegó.
+
+**4. Una de las cuatro opciones del `ValidationPipe` es indispensable: sin ella la validación no hace nada y tampoco avisa. ¿Cuál es y qué código de estado responde?**
+La opción indispensable es `transform: true`. Sin ella, el `ValidationPipe` nunca convierte el objeto plano que llega en el body a una instancia real de la clase del DTO, entonces `class-validator` no tiene de dónde leer los decoradores y no revisa nada, la petición pasaría como si no hubiera ninguna regla puesta. Al mandar un cuerpo con el tipo equivocado (por ejemplo `"nombre": 12345`) o con un campo que no existe en el DTO (por ejemplo `"colorFavorito"`), el servidor responde siempre `400 Bad Request`, con un arreglo `message` que dice exactamente qué estuvo mal (`"nombre must be a string"` o `"property colorFavorito should not exist"`).
+
+**5. ¿Cuántas líneas quedó más corto el controlador?**
+El archivo completo de `inscripciones.controller.ts` quedó 26 líneas más corto (se borraron 30, se agregaron 4). Nada más viendo el método `crear`, el bloque que validaba a mano y el `try/catch` que traducía los errores pasó de 24 líneas a 4, porque ahora todo eso lo hace el filtro de excepciones por su cuenta.
+
+**6. Si la respuesta llega en los dos casos, ¿quién bloquea realmente y a quién protege?**
+El servidor sí procesa y responde la petición en los dos casos, con el mismo código 200 y los mismos datos. La diferencia está nada más en un header: si el origen está permitido, viene `Access-Control-Allow-Origin` con ese origen; si no está permitido, ese header simplemente no aparece. El que realmente bloquea es el navegador del que hizo la petición: cuando no encuentra ese header con su propio origen, el navegador descarta la respuesta y no se la entrega al código JavaScript que la pidió, aunque la petición ya haya viajado completa por la red. Por eso desde REST Client (que no es un navegador) las dos peticiones "funcionan" igual, la protección de CORS es cosa del navegador, y a quien protege es al usuario que tiene esa página abierta, para que un sitio de otro origen no pueda leer a escondidas respuestas de una API donde el usuario tiene sesión iniciada.

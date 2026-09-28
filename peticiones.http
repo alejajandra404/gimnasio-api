@@ -15,7 +15,7 @@
 POST {{host}}/inscripciones
 Content-Type: application/json
 
-{ "horarioId": 1, "miembroId": 1 }
+{ "horarioId": 2, "miembroId": 1 }
 
 
 ### 2. Segunda inscripcion, se llena el cupo  ->  201
@@ -74,7 +74,7 @@ DELETE {{host}}/inscripciones/1
 POST {{host}}/inscripciones
 Content-Type: application/json
 
-{ "horarioId": 1, "miembroId": 3 }
+{ "horarioId": 99, "miembroId": 1 }
 
 
 ### ================================================================
@@ -84,13 +84,16 @@ Content-Type: application/json
 
 ### 11. Clases - listar (las dos del seed)  ->  200
 GET {{host}}/clases
+Origin: http://localhost:9999
+
+
 
 
 ### 12. Clases - crear  ->  201
 POST {{host}}/clases
 Content-Type: application/json
 
-{ "nombre": "Funcional" }
+{ "nombre": "Pilates", "colorFavorito": "azul" }
 
 
 ### 13. Clases - buscar por id  ->  200
@@ -120,8 +123,7 @@ GET {{host}}/miembros
 POST {{host}}/miembros
 Content-Type: application/json
 
-{ "nombre": "Luis Prueba", "correo": "luis@itson.mx", "membresia": "basica" }
-
+{ "nombre": "Ana Seis", "correo": "ana6@itson.mx", "membresia": "basica" }
 
 ### 19. Miembros - buscar por id  ->  200
 GET {{host}}/miembros/4

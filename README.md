@@ -175,3 +175,44 @@ El archivo completo de `inscripciones.controller.ts` quedó 26 líneas más cort
 
 **6. Si la respuesta llega en los dos casos, ¿quién bloquea realmente y a quién protege?**
 El servidor sí procesa y responde la petición en los dos casos, con el mismo código 200 y los mismos datos. La diferencia está nada más en un header: si el origen está permitido, viene `Access-Control-Allow-Origin` con ese origen; si no está permitido, ese header simplemente no aparece. El que realmente bloquea es el navegador del que hizo la petición: cuando no encuentra ese header con su propio origen, el navegador descarta la respuesta y no se la entrega al código JavaScript que la pidió, aunque la petición ya haya viajado completa por la red. Por eso desde REST Client (que no es un navegador) las dos peticiones "funcionan" igual, la protección de CORS es cosa del navegador, y a quien protege es al usuario que tiene esa página abierta, para que un sitio de otro origen no pueda leer a escondidas respuestas de una API donde el usuario tiene sesión iniciada.
+
+## Práctica 10 – Blindar la API, JWT y OpenAPI
+
+### Parte 1
+
+**1. ¿Por qué el filtro atrapa la clase base y no cada error por separado?**
+Porque los cuatro errores (`HorarioNoEncontradoError`, `MiembroNoEncontradoError`, etc.) extienden de `ErrorDominio`. Entonces cualquiera de ellos también cuenta como un `ErrorDominio`, y con `@Catch(ErrorDominio)` el filtro los agarra a todos.
+
+**2. ¿Por qué este middleware no podría decidir si un usuario tiene permiso para una ruta?**
+Porque el middleware corre muy al principio, antes de que Nest sepa a qué controller y a qué método va a ir la petición. No ve nada de eso, solo cosas como la URL o los headers. 
+
+**3. ¿Por qué la petición que responde 409 no aparece en ese registro?**
+Porque el `tap()` del interceptor solo se dispara cuando el controller responde bien. Si el controller lanza un error (como el 409 de cupo lleno), eso no pasa por el interceptor, se va al filtro de errores. Por eso en la consola nunca sale la línea `[HTTP]` para esa petción, solo sale la del filtro.
+
+**4. ¿Por qué este cambio rompe a cualquier cliente que ya estuviera usando la API?**
+Porque antes la respuesta de algo como `GET /clases` era directo el arreglo, y ahora ese arreglo quedó un nivel más adentro, dentro de `data`. Si un frotend ya estaba hecho esperando el arreglo directo (por ejemplo haciendo `respuesta[0]`), ahora eso ya no funciona, porque en la raíz ya no hay un arreglo.
+
+**5. Si el servidor respondió en los dos casos, ¿quién bloquea y a quién protege?**
+El servidor responde igual en los dos casos, con 200 OK. Lo que cambia es el header `Access-Control-Allow-Origin`: si el origen sí está permitido, aparece ese header; si no, no aparece. Pero como Postman no es un navegador, ahí nunca se bloquea nada, solo se nota la diferencia en los headers. El que bloquea de verdad es el navegador: si una página de un origen no permitido intenta usar esa respuesta, el navegador no deja que el código de esa página la use, aunque la respuesta ya haya llegado. 
+
+### Parte 2
+
+**1. ¿Por qué el campo se llama passwordHash y no password?**
+Porque así es imposible confundirse y guardar la contraseña por accidente. Si el campo se llamara `password`, alguien podría escribir código que guarde el texto que mandó el usuario directo, sin pasarlo por `bcrypt` antes. Con el nombre `passwordHash` queda claro desde el nombre que ahí siempre debe ir el resultado de un hash, nunca la contraseña en texto plano.
+
+**2. ¿Por qué los dos errores del inicio de sesión dicen exactamente lo mismo?**
+Porque así nadie puede usar la API para adivinar qué correos están registrados. Si el mensaje fuera distinto cuando el correo no existe y cuando la contraseña está mal, alguien podría ir probando correos uno por uno y fijarse en cuál mensaje le regresa, y así saber cuáles sí tienen cuenta. Por eso en `auth.service.ts` se usa el mismo `UnauthorizedException('Credenciales invalidas')` en los dos casos.
+
+**3. Si el contenido se puede leer, ¿qué es lo que protege la firma?**
+La firma no esconde el contenido, eso se ve en jwt.io sin necesitar ningún secreto. Lo que hace la firma es garantizar que nadie lo haya modificado después de que el servidor lo creó. Si alguien cambia algo del payload (por ejemplo pone `"rol": "admin"`), la firma ya no le va a coincidir, porque esa persona no tiene el secreto.
+
+**4. ¿Por qué es más seguro proteger todo y abrir a mano, que al revés?**
+Porque si se me olvida marcar algo como público, esa ruta da 401. En cambio, si fuera al revés (todo abierto y yo protegiendo a mano lo que debería estar cerrado), si se me olvida proteger una ruta, esa ruta queda abierta para cualquiera sin que nadie se dé cuenta, porque "funciona" normal, responde 200. 
+
+**5. ¿Cuál es la diferencia entre un 401 y un 403?**
+El 401 es cuando el servidor no sabe quién eres o no mandaste token, o el token está mal o ya venció. El 403 es distinto porque el servidor sí sabe quién eres, tu token es válido y pasa la verificación, peor esa cuenta no tiene permiso para hacer justo esa acción. Por ejemplo, cuando Karla manda su token válido pero intenta inscribir a otra persona, el servidor ya sabe que es Karla, el problema es que su rol de miembro no le permite inscribir a alguien más que no sea ella misma.
+
+**Nota random sobre el seed:** sí dejé escrito `prisma/seed.ts` con las tres cuentas tal como pide el PDF, pero `npx prisma db seed` nunca quiso correr en mi compu. Mi proyecto usa Prisma 7 con su generador nuevo, y el cliente que genera trae unos imports estilo `./internal/class.js` que `ts-node` no logra resolver, le moví la configuración como 4 veces y nada. Así que decidí meter las tres cuentas a mano con `POST /auth/registro`, que ya tenía funcionando. 
+
+**6. ¿Cuántas líneas del AuthService tuvieron que cambiar para pasar de memoria a MySQL? ¿Por qué?**
+Cero líneas. Solo creé el archivo nuevo `usuario-prisma.repository.ts` y cambié una línea en `auth.module.ts` (`useClass: UsuarioPrismaRepository` en vez de `UsuarioMemoriaRepository`). Es porque `AuthService` nunca conoció el repositorio concreto, solo conoce la interfaz `UsuarioRepository` a través del token `USUARIO_REPOSITORY`.

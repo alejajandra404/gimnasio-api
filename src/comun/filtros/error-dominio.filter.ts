@@ -1,4 +1,4 @@
-import { ArgumentsHost, Catch, ExceptionFilter, HttpStatus } from '@nestjs/common';
+import { ArgumentsHost, Catch, ExceptionFilter, HttpStatus, Logger } from '@nestjs/common';
 import { Request, Response } from 'express';
 import {
   CupoLlenoError,
@@ -10,6 +10,9 @@ import {
 
 @Catch(ErrorDominio)
 export class ErrorDominioFilter implements ExceptionFilter {
+  // Todo lo que escriba sale en la consola con la etiqueta [Dominio].
+  private readonly logger = new Logger('Dominio');
+
   catch(excepcion: ErrorDominio, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
@@ -17,8 +20,14 @@ export class ErrorDominioFilter implements ExceptionFilter {
 
     const statusCode = this.mapearCodigo(excepcion);
 
+    // En la consola: WARN [Dominio] POST /inscripciones -> 409 CupoLlenoError
+    this.logger.warn(
+      `${request.method} ${request.url} -> ${statusCode} ${excepcion.constructor.name}`,
+    );
+
     response.status(statusCode).json({
       statusCode,
+      error: excepcion.constructor.name, // el nombre de la clase: "CupoLlenoError"
       message: excepcion.message,
       path: request.url,
       timestamp: new Date().toISOString(),
@@ -35,6 +44,7 @@ export class ErrorDominioFilter implements ExceptionFilter {
     if (excepcion instanceof CupoLlenoError || excepcion instanceof InscripcionDuplicadaError) {
       return HttpStatus.CONFLICT;
     }
-    return HttpStatus.BAD_REQUEST;
+    // Un error de dominio que olvidamos mapear -> 500, para que se note.
+    return HttpStatus.INTERNAL_SERVER_ERROR;
   }
 }
